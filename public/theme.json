@@ -2,7 +2,7 @@
   "custom_fonts": [],
   "variables": {
     "light": {
-      "--background": "213 22% 92%",
+      "--background": "0 0% 100%",
       "--foreground": "214 28% 12%",
       "--card": "210 40% 100%",
       "--card-foreground": "214 28% 12%",

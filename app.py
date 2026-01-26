@@ -9,6 +9,7 @@ load_dotenv()
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 LLM_TEST_PATH = os.getenv("LLM_TEST_PATH", "/llm/test")
 DEFAULT_SYSTEM_PROMPT = os.getenv("LLM_SYSTEM_PROMPT", "You are a helpful assistant.")
+DEBUG_MODE = os.getenv("DEBUG_MODE", "false").strip().lower() in ("1", "true", "yes", "on")
 
 
 async def call_llm_test(prompt: str) -> dict:
@@ -30,11 +31,12 @@ async def call_llm_test(prompt: str) -> dict:
 async def on_chat_start() -> None:
     await cl.Message(
         content=(
-            "Hi! I'm your Chainlit starter wired to the Northstart LLM API. "
-            "Ask me anything and I'll send it to /llm/test."
+            "**Hello — I’m your Northstar AI Travel Assistant. "
+            "Ask me about destinations, hotels, amenities, and travel insights.**"
         )
     ).send()
-    await cl.Message(content=f"API base: {API_BASE_URL}").send()
+    if DEBUG_MODE:
+        await cl.Message(content=f"API base: {API_BASE_URL}").send()
 
 
 @cl.on_message
@@ -63,6 +65,6 @@ async def on_message(message: cl.Message) -> None:
         status_msg.content = "No output returned from /llm/test."
     await status_msg.update()
 
-    if model or usage:
+    if DEBUG_MODE and (model or usage):
         meta = {"model": model, "usage": usage}
         await cl.Message(content=f"Meta: {meta}").send()

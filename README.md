@@ -1,10 +1,10 @@
 # About Project
 
-Chainlit UI that connects to the Northstart RAG API. It sends user prompts to `/llm/test` and renders the model output in a clean, branded chat experience.
+Chainlit UI that connects to the Northstar RAG API. It sends user prompts to `/llm/test` and renders the model output in a clean, branded chat experience.
 
 ## What this does
 
-- Provides a lightweight chat UI for the Northstart LLM endpoint
+- Provides a lightweight chat UI for the Northstar LLM endpoint
 - Reads API settings from environment variables
 - Uses a custom avatar and light theme for branding
 
@@ -21,7 +21,7 @@ Open the URL printed by Chainlit (for example `http://localhost:8001`).
 
 ## API configuration
 
-The app calls the Northstart API `POST /llm/test`.
+The app calls the Northstar API `POST /llm/test`.
 
 Set these environment variables (optional):
 

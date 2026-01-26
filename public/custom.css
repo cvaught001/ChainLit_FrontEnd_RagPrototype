@@ -1,0 +1,10 @@
+/* Assistant response text color */
+.ai-message,
+.ai-message p,
+.ai-message li,
+.ai-message span,
+.ai-message div,
+.ai-message code,
+.ai-message pre {
+  color: #444444;
+}

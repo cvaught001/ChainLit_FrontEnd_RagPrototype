@@ -1,4 +1,4 @@
-![](/Users/christophervaught/projects/ChainLit_FrontEnd_RagPrototype/images/Northstar-Travel-Group.svg)
+![](/public/images/Northstar-Travel-Group.svg)
 
 # Welcome to Chainlit! 🚀🤖
 

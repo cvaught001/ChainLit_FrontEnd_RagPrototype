@@ -1,16 +1,54 @@
 ![](/public/images/Northstar-Travel-Group.svg)
 
-# Welcome to Chainlit! 🚀🤖
+# Northstart RAG Chainlit Front-End
 
-Hi there, Developer! 👋 We're excited to have you on board. Chainlit is a powerful tool designed to help you prototype, debug and share applications built on top of LLMs.
+Chainlit UI that connects to the Northstart RAG API. It sends user prompts to `/llm/test` and renders the model output in a clean, branded chat experience.
 
-## Useful Links 🔗
+## What this does
 
-- **Documentation:** Get started with our comprehensive [Chainlit Documentation](https://docs.chainlit.io) 📚
-- **Discord Community:** Join our friendly [Chainlit Discord](https://discord.gg/k73SQ3FyUh) to ask questions, share your projects, and connect with other developers! 💬
+- Provides a lightweight chat UI for the Northstart LLM endpoint
+- Reads API settings from environment variables
+- Uses a custom avatar and light theme for branding
 
-We can't wait to see what you create with Chainlit! Happy coding! 💻😊
+## Quick start
 
-## Welcome screen
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python -m chainlit run app.py -w --port 8001
+```
 
-To modify the welcome screen, edit the `chainlit.md` file at the root of your project. If you do not want a welcome screen, just leave this file empty.
+Open the URL printed by Chainlit (for example `http://localhost:8001`).
+
+## API configuration
+
+The app calls the Northstart API `POST /llm/test`.
+
+Set these environment variables (optional):
+
+```bash
+export API_BASE_URL="http://127.0.0.1:8000"
+export LLM_TEST_PATH="/llm/test"
+export LLM_SYSTEM_PROMPT="You are a helpful assistant."
+```
+
+You can also place them in a `.env` file at the project root.
+
+## Branding and theme
+
+- Avatar: `public/images/northstar-icon_chat.png`
+- Welcome image: `public/images/Northstar-Travel-Group.svg`
+- Theme: `public/theme.json`
+
+## Files to know
+
+- `app.py` Chainlit app logic and API call
+- `.chainlit/config.toml` UI settings
+- `public/theme.json` color palette
+- `public/images/` static assets
+
+## Troubleshooting
+
+- If port 8000 is already in use, start Chainlit on another port (e.g., `--port 8001`).
+- If you see blank UI assets, verify the app is running inside the project venv.

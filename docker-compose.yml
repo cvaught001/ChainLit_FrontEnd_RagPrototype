@@ -1,0 +1,17 @@
+services:
+  chainlit:
+    build: .
+    ports:
+      - "8001:8001"
+    environment:
+      API_BASE_URL: "http://hotel_rag_api:8000"
+      LLM_TEST_PATH: "/llm/test"
+      DEBUG_MODE: "false"
+    # If you want live-reload during dev, uncomment:
+    # volumes:
+    #   - ./:/app
+
+networks:
+  default:
+    external: true
+    name: hotel_rag_net

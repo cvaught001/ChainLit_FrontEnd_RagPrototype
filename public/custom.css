@@ -3,7 +3,10 @@
   --recent-panel-width: 220px;
   --recent-panel-left: 16px;
   --recent-panel-gutter: 16px;
-  --recent-panel-offset: calc(var(--recent-panel-left) + var(--recent-panel-width) + var(--recent-panel-gutter));
+  --recent-panel-offset: calc(
+    var(--recent-panel-left) + var(--recent-panel-width) +
+      var(--recent-panel-gutter)
+  );
   --assistant-text: #444444;
 }
 
@@ -40,7 +43,7 @@
 #recent-searches-toggle {
   position: fixed;
   left: var(--recent-toggle-left, 12px);
-  top: 16px;
+  top: 8px;
   width: 36px;
   height: 36px;
   border-radius: 999px;

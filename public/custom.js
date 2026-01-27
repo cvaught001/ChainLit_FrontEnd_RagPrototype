@@ -1,5 +1,6 @@
 (() => {
   const STORAGE_KEY = "northstar_recent_searches";
+  const OPEN_KEY = "northstar_recent_searches_open";
   const MAX_ITEMS = 10;
   const PANEL_ID = "recent-searches-panel";
   const TOGGLE_ID = "recent-searches-toggle";
@@ -65,11 +66,42 @@
     btn.setAttribute("aria-expanded", "false");
     btn.innerHTML = "<span class=\"recent-searches-toggle-icon\">RS</span>";
     btn.addEventListener("click", () => {
-      const isOpen = root.classList.toggle(OPEN_CLASS);
-      btn.setAttribute("aria-expanded", String(isOpen));
+      const isOpen = !root.classList.contains(OPEN_CLASS);
+      setOpenState(isOpen);
     });
     root.appendChild(btn);
     return btn;
+  };
+
+  const getStoredOpen = () => {
+    try {
+      const raw = localStorage.getItem(OPEN_KEY);
+      if (raw === null) return null;
+      return raw === "true";
+    } catch (_) {
+      return null;
+    }
+  };
+
+  const setStoredOpen = (value) => {
+    try {
+      localStorage.setItem(OPEN_KEY, String(!!value));
+    } catch (_) {
+      // ignore storage errors
+    }
+  };
+
+  const setOpenState = (value) => {
+    const root = getRoot();
+    if (!root) return;
+    const btn = ensureToggle();
+    if (value) {
+      root.classList.add(OPEN_CLASS);
+    } else {
+      root.classList.remove(OPEN_CLASS);
+    }
+    if (btn) btn.setAttribute("aria-expanded", String(!!value));
+    setStoredOpen(!!value);
   };
 
   const positionToggle = () => {
@@ -100,14 +132,13 @@
   const syncViewportState = () => {
     const root = getRoot();
     if (!root) return;
-    const btn = ensureToggle();
+    ensureToggle();
     const isMobile = window.matchMedia(MOBILE_QUERY).matches;
-    if (isMobile) {
-      root.classList.remove(OPEN_CLASS);
-      if (btn) btn.setAttribute("aria-expanded", "false");
+    const stored = getStoredOpen();
+    if (stored === null) {
+      setOpenState(!isMobile);
     } else {
-      root.classList.add(OPEN_CLASS);
-      if (btn) btn.setAttribute("aria-expanded", "true");
+      setOpenState(stored);
     }
     positionToggle();
   };

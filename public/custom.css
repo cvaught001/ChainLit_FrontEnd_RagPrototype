@@ -34,6 +34,7 @@
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
   z-index: 50;
   font-family: inherit;
+  display: none;
 }
 
 #recent-searches-toggle {
@@ -91,6 +92,10 @@
   background: hsl(var(--accent));
 }
 
+.recent-searches-open #recent-searches-panel {
+  display: block;
+}
+
 /* Reduce overlap by nudging chat content to the right */
 #root .mx-auto.w-full.flex-grow.px-4.pt-4,
 #root .mx-auto.w-full.px-4.pb-4 {
@@ -98,14 +103,6 @@
 }
 
 @media (max-width: 768px) {
-  #recent-searches-panel {
-    display: none;
-  }
-
-  .recent-searches-open #recent-searches-panel {
-    display: block;
-  }
-
   #recent-searches-toggle {
     top: 64px;
   }

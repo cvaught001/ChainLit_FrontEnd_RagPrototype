@@ -33,6 +33,36 @@ export LLM_SYSTEM_PROMPT="You are a helpful assistant."
 
 You can also place them in a `.env` file at the project root.
 
+## Run with Docker (local)
+
+This repo includes a Dockerfile and `docker-compose.yml` that connects to the API container on the shared network `hotel_rag_net`.
+
+### 1) Create the shared network (one time)
+
+```bash
+docker network create hotel_rag_net
+```
+
+### 2) Start the API (from the API repo)
+
+```bash
+docker compose up -d
+```
+
+### 3) Build and run Chainlit (from this repo)
+
+```bash
+docker compose up --build
+```
+
+Then open `http://localhost:8001`.
+
+If your API is running on the host instead of Docker, set:
+
+```bash
+API_BASE_URL="http://host.docker.internal:8000"
+```
+
 ## Branding and theme
 
 - Avatar: `public/images/northstar-icon_chat.png`

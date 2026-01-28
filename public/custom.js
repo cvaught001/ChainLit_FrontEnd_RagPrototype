@@ -150,6 +150,83 @@
     positionToggle()
   }
 
+  const resolveChatInput = root => {
+    const candidates = [
+      "[data-testid='chat-input']",
+      "[data-testid='message-input']",
+      "[data-testid='chat-composer']",
+      "[data-testid='composer']",
+      "textarea[placeholder]",
+      "textarea",
+      "input[type='text']",
+      "[contenteditable='true']",
+      "[role='textbox']"
+    ]
+
+    for (const selector of candidates) {
+      const node = root.querySelector(selector)
+      if (!node) continue
+      if (
+        node.matches &&
+        (node.matches('textarea') ||
+          node.matches("input[type='text']") ||
+          node.matches("[contenteditable='true']") ||
+          node.matches("[role='textbox']"))
+      ) {
+        return node
+      }
+      const child = node.querySelector(
+        "textarea, input[type='text'], [contenteditable='true'], [role='textbox']"
+      )
+      if (child) return child
+    }
+
+    const docFallback =
+      document.querySelector('textarea') ||
+      document.querySelector("input[type='text']") ||
+      document.querySelector("[contenteditable='true']") ||
+      document.querySelector("[role='textbox']")
+    return docFallback
+  }
+
+  const setChatInputValue = (input, value) => {
+    if (!input) return
+    input.focus()
+
+    if (input.isContentEditable || input.getAttribute('contenteditable') === 'true') {
+      try {
+        document.execCommand('selectAll', false, null)
+        document.execCommand('insertText', false, value)
+      } catch (_) {
+        input.textContent = value
+      }
+    } else {
+      const proto =
+        input.tagName === 'TEXTAREA'
+          ? HTMLTextAreaElement.prototype
+          : HTMLInputElement.prototype
+      const descriptor = Object.getOwnPropertyDescriptor(proto, 'value')
+      if (descriptor && descriptor.set) {
+        descriptor.set.call(input, value)
+      } else {
+        input.value = value
+      }
+    }
+
+    const inputEvent =
+      typeof InputEvent === 'function'
+        ? new InputEvent('input', {
+            bubbles: true,
+            composed: true,
+            inputType: 'insertText',
+            data: value
+          })
+        : new Event('input', { bubbles: true })
+    input.dispatchEvent(inputEvent)
+    input.dispatchEvent(new Event('change', { bubbles: true }))
+    input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: ' ' }))
+  }
+
   const render = items => {
     const panel = ensurePanel()
     if (!panel) return
@@ -166,13 +243,10 @@
       li.addEventListener('click', () => {
         const root = getRoot()
         if (!root) return
-        const input =
-          root.querySelector('textarea') ||
-          root.querySelector("input[type='text']")
+        const input = resolveChatInput(root)
         if (!input) return
-        input.value = item
-        input.dispatchEvent(new Event('input', { bubbles: true }))
         input.focus()
+        setChatInputValue(input, item)
       })
       list.appendChild(li)
     })

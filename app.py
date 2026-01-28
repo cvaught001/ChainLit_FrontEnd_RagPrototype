@@ -1,4 +1,5 @@
 import os
+import uuid
 
 import chainlit as cl
 import httpx
@@ -12,9 +13,9 @@ DEFAULT_SYSTEM_PROMPT = os.getenv("LLM_SYSTEM_PROMPT", "You are a helpful assist
 DEBUG_MODE = os.getenv("DEBUG_MODE", "false").strip().lower() in ("1", "true", "yes", "on")
 
 
-async def call_llm_test(prompt: str) -> dict:
+async def call_llm_test(prompt: str, session_id: str) -> dict:
     url = f"{API_BASE_URL}{LLM_TEST_PATH}"
-    payload = {"prompt": prompt, "system": DEFAULT_SYSTEM_PROMPT}
+    payload = {"prompt": prompt, "system": DEFAULT_SYSTEM_PROMPT, "session_id": session_id}
     async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(url, json=payload)
         if resp.status_code >= 400:
@@ -29,6 +30,8 @@ async def call_llm_test(prompt: str) -> dict:
 
 @cl.on_chat_start
 async def on_chat_start() -> None:
+    session_id = f"session-{uuid.uuid4()}"
+    cl.user_session.set("session_id", session_id)
     await cl.Message(
         content=(
             "**Hello — I’m your Northstar AI Travel Assistant. "
@@ -37,6 +40,7 @@ async def on_chat_start() -> None:
     ).send()
     if DEBUG_MODE:
         await cl.Message(content=f"API base: {API_BASE_URL}").send()
+        await cl.Message(content=f"Session: {session_id}").send()
 
 
 @cl.on_message
@@ -46,10 +50,15 @@ async def on_message(message: cl.Message) -> None:
         await cl.Message(content="Say something and I'll respond.").send()
         return
 
+    session_id = cl.user_session.get("session_id")
+    if not session_id:
+        session_id = f"session-{uuid.uuid4()}"
+        cl.user_session.set("session_id", session_id)
+
     status_msg = cl.Message(content="Thinking...")
     await status_msg.send()
     try:
-        data = await call_llm_test(user_text)
+        data = await call_llm_test(user_text, session_id)
     except Exception as exc:
         status_msg.content = f"Request failed: {exc}"
         await status_msg.update()

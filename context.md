@@ -61,6 +61,23 @@ sudo docker compose up -d --build
 If you control the API container, prefer naming it `hotel_rag_api` and attaching it to
 `hotel_rag_net`, then keep `API_BASE_URL=http://hotel_rag_api:8000`.
 
+### If you hit this error
+`Request failed: [Errno -3] Temporary failure in name resolution`
+
+Fix it by setting `API_BASE_URL` to the actual API container name or by adding a network alias:
+
+```
+# Option A: point to the real container name
+export API_BASE_URL=http://northstar-api:8000
+sudo docker-compose up -d --build
+```
+
+```
+# Option B: add an alias so hotel_rag_api resolves
+sudo docker network disconnect hotel_rag_net northstar-api
+sudo docker network connect --alias hotel_rag_api hotel_rag_net northstar-api
+```
+
 ## Make API container reachable by name
 The API container is currently named `northstar-api` on the VM.
 To make `hotel_rag_api` resolve in the Chainlit container:

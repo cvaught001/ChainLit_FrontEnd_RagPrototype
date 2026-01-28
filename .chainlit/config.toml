@@ -150,7 +150,7 @@ alert_style = "classic"
 # custom_meta_url = "https://github.com/Chainlit/chainlit"
 
 # Specify a custom meta image url.
-custom_meta_image_url = "http://20.171.96.40:8001/public/images/Northstar-Travel-Group.svg"
+custom_meta_image_url = "http://20.171.96.40:8001/public/images/Northstar-Travel-Group.png"
 
 # Load assistant logo directly from URL.
 logo_file_url = "/public/images/Northstar-Travel-Group.svg"

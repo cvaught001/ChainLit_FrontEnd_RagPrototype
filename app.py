@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
-LLM_TEST_PATH = os.getenv("LLM_TEST_PATH", "/llm/test")
+LLM_TEST_PATH = os.getenv("LLM_TEST_PATH", "/ai/query")
 DEFAULT_SYSTEM_PROMPT = os.getenv("LLM_SYSTEM_PROMPT", "You are a helpful assistant.")
 DEBUG_MODE = os.getenv("DEBUG_MODE", "false").strip().lower() in ("1", "true", "yes", "on")
 
@@ -62,7 +62,7 @@ async def on_message(message: cl.Message) -> None:
     if output:
         status_msg.content = output
     else:
-        status_msg.content = "No output returned from /llm/test."
+        status_msg.content = "No output returned from /ai/query."
     await status_msg.update()
 
     if DEBUG_MODE and (model or usage):

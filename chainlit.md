@@ -2,7 +2,7 @@
 
 # Northstar RAG Chainlit Front-End
 
-Chainlit UI that connects to the Northstar RAG API. It sends user prompts to `/llm/test` and renders the model output in a clean, branded chat experience.
+Chainlit UI that connects to the Northstar RAG API. It sends user prompts to `/ai/query` and renders the model output in a clean, branded chat experience.
 
 ## What this does
 
@@ -23,13 +23,13 @@ Open the URL printed by Chainlit (for example `http://localhost:8001`).
 
 ## API configuration
 
-The app calls the Northstar API `POST /llm/test`.
+The app calls the Northstar API `POST /ai/query`.
 
 Set these environment variables (optional):
 
 ```bash
 export API_BASE_URL="http://127.0.0.1:8000"
-export LLM_TEST_PATH="/llm/test"
+export LLM_TEST_PATH="/ai/query"
 export LLM_SYSTEM_PROMPT="You are a helpful assistant."
 ```
 

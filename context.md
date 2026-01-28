@@ -49,6 +49,18 @@ sudo docker run -d --name chainlit-frontend \
   northsttaracr.azurecr.io/northstar-rag-frontend:latest
 ```
 
+## Avoid DNS issues (recommended)
+Use docker compose with an explicit `API_BASE_URL` that matches the API container name.
+
+```
+cd ~/ChainLit_FrontEnd_RagPrototype
+export API_BASE_URL=http://northstar-api:8000
+sudo docker compose up -d --build
+```
+
+If you control the API container, prefer naming it `hotel_rag_api` and attaching it to
+`hotel_rag_net`, then keep `API_BASE_URL=http://hotel_rag_api:8000`.
+
 ## Make API container reachable by name
 The API container is currently named `northstar-api` on the VM.
 To make `hotel_rag_api` resolve in the Chainlit container:

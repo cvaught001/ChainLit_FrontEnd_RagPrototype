@@ -49,6 +49,16 @@ sudo docker run -d --name chainlit-frontend \
   northsttaracr.azurecr.io/northstar-rag-frontend:latest
 ```
 
+## Compose conflict fix
+If `docker-compose` reports:
+`Conflict. The container name "/chainlit-frontend" is already in use`
+
+Remove the old container and try again:
+```
+sudo docker rm -f chainlit-frontend
+sudo docker-compose up -d --build
+```
+
 ## Avoid DNS issues (recommended)
 Use docker compose with an explicit `API_BASE_URL` that matches the API container name.
 

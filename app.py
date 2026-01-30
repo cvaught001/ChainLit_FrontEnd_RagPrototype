@@ -1,4 +1,5 @@
 import os
+import re
 import uuid
 
 import chainlit as cl
@@ -26,6 +27,19 @@ async def call_llm_test(prompt: str, session_id: str) -> dict:
                 pass
             raise RuntimeError(f"API error {resp.status_code}: {detail}")
         return resp.json()
+
+def strip_memory_blocks(text: str) -> str:
+    if not text:
+        return text
+    cleaned = re.sub(r"<memory>.*?</memory>", "", text, flags=re.DOTALL)
+    if "<memory>" in cleaned and "</memory>" not in cleaned:
+        before, after = cleaned.split("<memory>", 1)
+        if "\n" in after:
+            after = after.split("\n", 1)[1]
+            cleaned = before + after
+        else:
+            cleaned = before
+    return cleaned.strip()
 
 
 @cl.on_chat_start
@@ -64,7 +78,7 @@ async def on_message(message: cl.Message) -> None:
         await status_msg.update()
         return
 
-    output = (data.get("output") or "").strip()
+    output = strip_memory_blocks((data.get("output") or "").strip())
     model = data.get("model")
     usage = data.get("usage")
 

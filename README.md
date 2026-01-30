@@ -2,6 +2,10 @@
 
 Chainlit UI that connects to the Northstar RAG API. It sends user prompts to `/ai/query` and renders the model output in a clean, branded chat experience.
 
+## Version
+
+Current release: `1.0.0_stable`
+
 ## What this does
 
 - Provides a lightweight chat UI for the Northstar LLM endpoint

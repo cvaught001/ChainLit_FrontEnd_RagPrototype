@@ -7,6 +7,7 @@
   const OPEN_CLASS = 'recent-searches-open'
   const MOBILE_QUERY = '(max-width: 768px)'
   const PAGE_TITLE = 'Northstar RAG Database Chat LLM Demo'
+  const APP_VERSION = '1.0.0_stable'
 
   const getRoot = () =>
     window.cl_shadowRootElement ||
@@ -266,6 +267,16 @@
 
   const initObserver = () => {
     document.title = PAGE_TITLE
+    const head = document.head || document.getElementsByTagName('head')[0]
+    if (head) {
+      let meta = head.querySelector("meta[name='version']")
+      if (!meta) {
+        meta = document.createElement('meta')
+        meta.setAttribute('name', 'version')
+        head.appendChild(meta)
+      }
+      meta.setAttribute('content', APP_VERSION)
+    }
     const root = getRoot()
     if (!root) return
 

@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:5001").rstrip("/")
 LLM_TEST_PATH = os.getenv("LLM_TEST_PATH", "/ai/query")
 DEFAULT_SYSTEM_PROMPT = os.getenv("LLM_SYSTEM_PROMPT", "You are a helpful assistant.")
 DEBUG_MODE = os.getenv("DEBUG_MODE", "false").strip().lower() in ("1", "true", "yes", "on")
@@ -40,6 +40,42 @@ def strip_memory_blocks(text: str) -> str:
         else:
             cleaned = before
     return cleaned.strip()
+
+
+def bold_ordered_list_names(text: str) -> str:
+    if not text:
+        return text
+
+    lines = text.splitlines()
+    in_code_block = False
+
+    for idx, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_code_block = not in_code_block
+            continue
+        if in_code_block:
+            continue
+
+        match = re.match(r"^(\s*\d+\.\s+)(.+)$", line)
+        if not match:
+            continue
+
+        prefix, item = match.groups()
+        separator_match = re.search(r"\s(?:-|—|:|\|)\s", item)
+        if separator_match:
+            name = item[: separator_match.start()].rstrip()
+            rest = item[separator_match.start() :]
+        else:
+            name = item.rstrip()
+            rest = ""
+
+        if name.startswith("**") and name.endswith("**"):
+            continue
+
+        lines[idx] = f"{prefix}**{name}**{rest}"
+
+    return "\n".join(lines)
 
 
 @cl.on_chat_start
@@ -79,6 +115,7 @@ async def on_message(message: cl.Message) -> None:
         return
 
     output = strip_memory_blocks((data.get("output") or "").strip())
+    output = bold_ordered_list_names(output)
     model = data.get("model")
     usage = data.get("usage")
 

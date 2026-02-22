@@ -24,8 +24,12 @@ variables:
   VM_USER: christophervaught
   VM_SSH_SECURE_FILE: gcp-vm-ssh-key.pem
   VM_ENV_FILE: /home/$(VM_USER)/chainlit-frontend/.env
-  USE_GCP_SECRET_MANAGER: 'true'
+  USE_GCP_SECRET_MANAGER: 'false'
   GCP_RUNTIME_SECRETS: API_BASE_URL LLM_TEST_PATH DEBUG_MODE LLM_SYSTEM_PROMPT
+  FRONTEND_API_BASE_URL: http://hotel_rag_api:8000
+  FRONTEND_LLM_TEST_PATH: /ai/query
+  FRONTEND_DEBUG_MODE: 'false'
+  FRONTEND_LLM_SYSTEM_PROMPT: You are a helpful assistant.
   # Optional: externalize VM identity/key via Azure DevOps variables.
   # VM_USER: $(GCP_VM_USER)
   # VM_SSH_SECURE_FILE: $(GCP_VM_SSH_SECURE_FILE)
@@ -154,8 +158,16 @@ stages:
                 echo "Runtime env generated at $(VM_ENV_FILE)"
               elif [ ! -f "$(VM_ENV_FILE)" ]; then
                 echo "Missing env file: $(VM_ENV_FILE)"
-                echo "Create the file or set USE_GCP_SECRET_MANAGER=true"
-                exit 1
+                echo "Generating runtime env from pipeline defaults"
+                mkdir -p "$(dirname "$(VM_ENV_FILE)")"
+                {
+                  printf 'API_BASE_URL=%s\n' "$(FRONTEND_API_BASE_URL)"
+                  printf 'LLM_TEST_PATH=%s\n' "$(FRONTEND_LLM_TEST_PATH)"
+                  printf 'DEBUG_MODE=%s\n' "$(FRONTEND_DEBUG_MODE)"
+                  printf 'LLM_SYSTEM_PROMPT=%s\n' "$(FRONTEND_LLM_SYSTEM_PROMPT)"
+                } > "$(VM_ENV_FILE)"
+                chmod 600 "$(VM_ENV_FILE)"
+                echo "Runtime env generated at $(VM_ENV_FILE)"
               fi
               echo "Ensuring docker network exists"
               sudo docker network create $(DOCKER_NETWORK) || true

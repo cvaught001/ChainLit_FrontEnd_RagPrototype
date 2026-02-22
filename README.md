@@ -77,12 +77,12 @@ This repo includes `azure-pipelines.yml` with two stages:
 Current deploy target variables in pipeline:
 - `VM_HOST: 35.224.13.33`
 - `VM_USER: christopher`
-- `VM_SSH_SECURE_FILE: dev-northstar-db-vm_key.pem`
+- `VM_SSH_SECURE_FILE: gcp-vm-ssh-key-ci.pem`
 - `VM_ENV_FILE: /home/$(VM_USER)/chainlit-frontend/.env`
 
 Required Azure DevOps Secure Files:
 - `gcp-artifact-registry-sa.json`
-- `dev-northstar-db-vm_key.pem` (private key, not `.pub`)
+- `gcp-vm-ssh-key-ci.pem` (private key, not `.pub`)
 
 Important:
 - The secure file must be authorized for this pipeline in `Pipelines > Library > Secure files`.
@@ -95,7 +95,7 @@ If deploy fails with `Permission denied (publickey)`:
 
 1. Validate locally with the same target and key:
 ```bash
-ssh -i ./dev-northstar-db-vm_key.pem -o IdentitiesOnly=yes christopher@35.224.13.33 "whoami"
+ssh -i ./gcp-vm-ssh-key.pem -o IdentitiesOnly=yes christopher@35.224.13.33 "whoami"
 ```
 2. If that fails, fix VM-side key authorization for that exact `VM_USER`.
 3. Confirm pipeline variable values (`VM_HOST`, `VM_USER`, `VM_SSH_SECURE_FILE`) match your working local SSH combination.

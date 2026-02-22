@@ -68,6 +68,38 @@ If your API is running on the host instead of Docker, set:
 API_BASE_URL="http://host.docker.internal:8000"
 ```
 
+## Azure DevOps deployment (GCP VM)
+
+This repo includes `azure-pipelines.yml` with two stages:
+- Build and push image to Artifact Registry
+- Deploy the image to a GCP VM over SSH
+
+Current deploy target variables in pipeline:
+- `VM_HOST: 35.224.13.33`
+- `VM_USER: christopher`
+- `VM_SSH_SECURE_FILE: dev-northstar-db-vm_key.pem`
+- `VM_ENV_FILE: /home/$(VM_USER)/chainlit-frontend/.env`
+
+Required Azure DevOps Secure Files:
+- `gcp-artifact-registry-sa.json`
+- `dev-northstar-db-vm_key.pem` (private key, not `.pub`)
+
+Important:
+- The secure file must be authorized for this pipeline in `Pipelines > Library > Secure files`.
+- The SSH public key that matches `VM_SSH_SECURE_FILE` must exist in `/home/$(VM_USER)/.ssh/authorized_keys` on the VM.
+- The app version is injected during Docker build via `APP_VERSION` and written to `<meta name="version" ...>` in the rendered page.
+
+### SSH preflight troubleshooting
+
+If deploy fails with `Permission denied (publickey)`:
+
+1. Validate locally with the same target and key:
+```bash
+ssh -i ./dev-northstar-db-vm_key.pem -o IdentitiesOnly=yes christopher@35.224.13.33 "whoami"
+```
+2. If that fails, fix VM-side key authorization for that exact `VM_USER`.
+3. Confirm pipeline variable values (`VM_HOST`, `VM_USER`, `VM_SSH_SECURE_FILE`) match your working local SSH combination.
+
 ## Branding and theme
 
 - Avatar: `public/images/northstar-icon_chat.png`

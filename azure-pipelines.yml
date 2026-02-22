@@ -24,8 +24,10 @@ variables:
   VM_USER: christophervaught
   VM_SSH_SECURE_FILE: gcp-vm-ssh-key.pem
   VM_ENV_FILE: /home/$(VM_USER)/chainlit-frontend/.env
+  # Set true only if these exact frontend secrets exist in GCP Secret Manager.
   USE_GCP_SECRET_MANAGER: 'false'
   GCP_RUNTIME_SECRETS: API_BASE_URL LLM_TEST_PATH DEBUG_MODE LLM_SYSTEM_PROMPT
+  # Fallback runtime values used to generate VM_ENV_FILE when Secret Manager is disabled.
   FRONTEND_API_BASE_URL: http://hotel_rag_api:8000
   FRONTEND_LLM_TEST_PATH: /ai/query
   FRONTEND_DEBUG_MODE: 'false'

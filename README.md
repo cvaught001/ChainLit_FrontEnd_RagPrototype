@@ -76,17 +76,19 @@ This repo includes `azure-pipelines.yml` with two stages:
 
 Current deploy target variables in pipeline:
 - `VM_HOST: 35.224.13.33`
-- `VM_USER: christopher`
-- `VM_SSH_SECURE_FILE: gcp-vm-ssh-key-ci.pem`
+- `VM_USER: christophervaught`
+- `VM_SSH_SECURE_FILE: gcp-vm-ssh-key.pem`
 - `VM_ENV_FILE: /home/$(VM_USER)/chainlit-frontend/.env`
+- `USE_GCP_SECRET_MANAGER: false`
 
 Required Azure DevOps Secure Files:
 - `gcp-artifact-registry-sa.json`
-- `gcp-vm-ssh-key-ci.pem` (private key, not `.pub`)
+- `gcp-vm-ssh-key.pem` (private key, not `.pub`)
 
 Important:
 - The secure file must be authorized for this pipeline in `Pipelines > Library > Secure files`.
 - The SSH public key that matches `VM_SSH_SECURE_FILE` must exist in `/home/$(VM_USER)/.ssh/authorized_keys` on the VM.
+- When `USE_GCP_SECRET_MANAGER=false`, deploy auto-generates `$(VM_ENV_FILE)` on first run using pipeline defaults (`FRONTEND_API_BASE_URL`, `FRONTEND_LLM_TEST_PATH`, `FRONTEND_DEBUG_MODE`, `FRONTEND_LLM_SYSTEM_PROMPT`).
 - The app version is injected during Docker build via `APP_VERSION` and written to `<meta name="version" ...>` in the rendered page.
 
 ### SSH preflight troubleshooting
@@ -95,7 +97,7 @@ If deploy fails with `Permission denied (publickey)`:
 
 1. Validate locally with the same target and key:
 ```bash
-ssh -i ./gcp-vm-ssh-key.pem -o IdentitiesOnly=yes christopher@35.224.13.33 "whoami"
+ssh -i ./gcp-vm-ssh-key.pem -o IdentitiesOnly=yes christophervaught@35.224.13.33 "whoami"
 ```
 2. If that fails, fix VM-side key authorization for that exact `VM_USER`.
 3. Confirm pipeline variable values (`VM_HOST`, `VM_USER`, `VM_SSH_SECURE_FILE`) match your working local SSH combination.

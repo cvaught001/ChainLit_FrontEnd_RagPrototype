@@ -6,3 +6,6 @@ __pycache__/
 venv/
 dev-northstar-db-vm_key.pem
 chainlit.log
+gcp-vm-ssh-key.pem.pub
+keys/univentiai-6a78d807550f.json
+gcp-vm-ssh-key.pem

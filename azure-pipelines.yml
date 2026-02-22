@@ -22,7 +22,7 @@ variables:
   # Reserve/attach a static external IP (or use DNS) for stable CI/CD deployments.
   VM_HOST: 35.224.13.33
   VM_USER: christopher
-  VM_SSH_SECURE_FILE: gcp-vm-ssh-key.pem
+  VM_SSH_SECURE_FILE: gcp-vm-ssh-key-ci.pem
   VM_ENV_FILE: /home/christopher/chainlit-frontend/.env
   USE_GCP_SECRET_MANAGER: 'true'
   GCP_RUNTIME_SECRETS: API_BASE_URL LLM_TEST_PATH DEBUG_MODE LLM_SYSTEM_PROMPT
@@ -83,7 +83,7 @@ stages:
         steps:
           # Azure DevOps Secure Files:
           # - gcp-artifact-registry-sa.json (service account with Artifact Registry Reader)
-          # - gcp-vm-ssh-key.pem (private key for VM_USER@VM_HOST)
+          # - gcp-vm-ssh-key-ci.pem (private key for VM_USER@VM_HOST)
           - task: DownloadSecureFile@1
             name: gcpSaJson
             inputs:
@@ -105,9 +105,11 @@ stages:
               echo "Secure file variable: $(VM_SSH_SECURE_FILE)"
               echo "Using SSH key fingerprint:"
               ssh-keygen -lf "$(vmSshKey.secureFilePath)"
-              if ! ssh-keygen -y -f "$(vmSshKey.secureFilePath)" >/dev/null 2>&1; then
+              key_parse_err=""
+              if ! key_parse_err="$(ssh-keygen -y -f "$(vmSshKey.secureFilePath)" 2>&1 >/dev/null)"; then
                 echo "The SSH private key could not be read non-interactively."
-                echo "Use an unencrypted private key in Azure Secure Files for CI deployments."
+                echo "ssh-keygen detail: $key_parse_err"
+                echo "Use an unencrypted private key in Azure Secure Files, and ensure the file is a private key (not .pub)."
                 exit 1
               fi
 

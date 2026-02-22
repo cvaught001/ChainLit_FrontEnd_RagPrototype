@@ -1,0 +1,178 @@
+name: $(Date:yyyyMMdd).$(Rev:r)
+
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+  GCP_REGION: us-central1
+  GCP_PROJECT_ID: univentiai
+  GAR_REPOSITORY: northstar-rag-registry
+  IMAGE_NAME: northstar-rag-frontend
+  APP_PORT: '8001'
+  CONTAINER_NAME: chainlit-frontend
+  DOCKER_NETWORK: hotel_rag_net
+  # GCE VM external IP can change after stop/start when using ephemeral IPs.
+  # Reserve/attach a static external IP (or use DNS) for stable CI/CD deployments.
+  VM_HOST: 35.224.13.33
+  VM_USER: christopher
+  VM_SSH_SECURE_FILE: dev-northstar-db-vm_key.pem
+  VM_ENV_FILE: /home/christopher/chainlit-frontend/.env
+  USE_GCP_SECRET_MANAGER: 'true'
+  GCP_RUNTIME_SECRETS: API_BASE_URL LLM_TEST_PATH DEBUG_MODE LLM_SYSTEM_PROMPT
+  # Optional: externalize VM identity/key via Azure DevOps variables.
+  # VM_USER: $(GCP_VM_USER)
+  # VM_SSH_SECURE_FILE: $(GCP_VM_SSH_SECURE_FILE)
+  # VM_ENV_FILE: /home/$(GCP_VM_USER)/chainlit-frontend/.env
+  # Optional: enable Secret Manager-based runtime env generation on VM.
+  # USE_GCP_SECRET_MANAGER: "true"
+  # GCP_RUNTIME_SECRETS: API_BASE_URL LLM_TEST_PATH DEBUG_MODE LLM_SYSTEM_PROMPT
+  GAR_HOST: $(GCP_REGION)-docker.pkg.dev
+  IMAGE_TAG: $(Build.SourceVersion)
+  IMAGE_URI: $(GAR_HOST)/$(GCP_PROJECT_ID)/$(GAR_REPOSITORY)/$(IMAGE_NAME):$(IMAGE_TAG)
+  IMAGE_URI_LATEST: $(GAR_HOST)/$(GCP_PROJECT_ID)/$(GAR_REPOSITORY)/$(IMAGE_NAME):latest
+
+stages:
+  - stage: BuildAndPush
+    displayName: Build and Push Image
+    jobs:
+      - job: Build
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: self
+
+          # Azure DevOps Secure Files:
+          # - gcp-artifact-registry-sa.json (service account with Artifact Registry Writer)
+          - task: DownloadSecureFile@1
+            name: gcpSaJson
+            inputs:
+              secureFile: gcp-artifact-registry-sa.json
+
+          - bash: |
+              set -euo pipefail
+
+              cat "$(gcpSaJson.secureFilePath)" | docker login \
+                -u _json_key \
+                --password-stdin "https://$(GAR_HOST)"
+
+              docker build --platform linux/amd64 \
+                -t "$(IMAGE_URI)" \
+                -t "$(IMAGE_URI_LATEST)" \
+                .
+
+              docker push "$(IMAGE_URI)"
+              docker push "$(IMAGE_URI_LATEST)"
+            displayName: Build and Push to Artifact Registry
+
+  - stage: Deploy
+    displayName: Deploy to GCP VM
+    dependsOn: BuildAndPush
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: DeployVm
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          # Azure DevOps Secure Files:
+          # - gcp-artifact-registry-sa.json (service account with Artifact Registry Reader)
+          # - gcp-vm-ssh-key.pem (private key for VM_USER@VM_HOST)
+          - task: DownloadSecureFile@1
+            name: gcpSaJson
+            inputs:
+              secureFile: gcp-artifact-registry-sa.json
+
+          - task: DownloadSecureFile@1
+            name: vmSshKey
+            inputs:
+              secureFile: $(VM_SSH_SECURE_FILE)
+
+          - bash: |
+              set -euo pipefail
+              chmod 600 "$(vmSshKey.secureFilePath)"
+
+              SSH_OPTS="-i $(vmSshKey.secureFilePath) -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+
+              echo "Using SSH key fingerprint:"
+              ssh-keygen -lf "$(vmSshKey.secureFilePath)"
+
+              # Fail fast with a clear message when VM key/user/host do not match.
+              ssh ${SSH_OPTS} "$(VM_USER)@$(VM_HOST)" "echo SSH preflight OK"
+
+              # Authenticate Docker on VM to pull private image from Artifact Registry.
+              cat "$(gcpSaJson.secureFilePath)" | ssh ${SSH_OPTS} "$(VM_USER)@$(VM_HOST)" \
+                "sudo docker login -u _json_key --password-stdin https://$(GAR_HOST)"
+
+              ssh ${SSH_OPTS} "$(VM_USER)@$(VM_HOST)" <<'EOF'
+              set -euo pipefail
+              echo "Deploy start on VM: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+              if [ "$(USE_GCP_SECRET_MANAGER)" = "true" ]; then
+                echo "Secret Manager mode enabled"
+                if ! command -v gcloud >/dev/null 2>&1; then
+                  echo "gcloud CLI is required on VM when USE_GCP_SECRET_MANAGER=true"
+                  exit 1
+                fi
+
+                mkdir -p "$(dirname "$(VM_ENV_FILE)")"
+                tmp_env="$(mktemp)"
+                trap 'rm -f "$tmp_env"' EXIT
+
+                for secret_name in $(GCP_RUNTIME_SECRETS); do
+                  echo "Fetching secret: $secret_name"
+                  secret_value="$(timeout 30 gcloud secrets versions access latest --secret="$secret_name" --project="$(GCP_PROJECT_ID)" | tr -d '\r')"
+                  if [ -z "$secret_value" ]; then
+                    echo "Secret '$secret_name' is empty or missing"
+                    exit 1
+                  fi
+                  printf '%s=%s\n' "$secret_name" "$secret_value" >> "$tmp_env"
+                done
+
+                install -m 600 "$tmp_env" "$(VM_ENV_FILE)"
+                rm -f "$tmp_env"
+                trap - EXIT
+                echo "Runtime env generated at $(VM_ENV_FILE)"
+              elif [ ! -f "$(VM_ENV_FILE)" ]; then
+                echo "Missing env file: $(VM_ENV_FILE)"
+                echo "Create the file or set USE_GCP_SECRET_MANAGER=true"
+                exit 1
+              fi
+              echo "Ensuring docker network exists"
+              sudo docker network create $(DOCKER_NETWORK) || true
+              echo "Pulling image: $(IMAGE_URI)"
+              sudo docker pull $(IMAGE_URI)
+              echo "Restarting container: $(CONTAINER_NAME)"
+              sudo docker rm -f $(CONTAINER_NAME) || true
+              sudo docker run -d --name $(CONTAINER_NAME) \
+                --restart unless-stopped \
+                --env-file $(VM_ENV_FILE) \
+                --network $(DOCKER_NETWORK) \
+                -p $(APP_PORT):$(APP_PORT) \
+                $(IMAGE_URI)
+
+              # Give the UI time to boot and fail with useful logs if it never becomes healthy.
+              ok=0
+              for i in $(seq 1 24); do
+                echo "Health attempt $i/24"
+                if curl -fsS http://127.0.0.1:$(APP_PORT)/ >/dev/null; then
+                  ok=1
+                  break
+                fi
+                sleep 5
+              done
+
+              if [ "$ok" -ne 1 ]; then
+                echo "Health check failed after waiting 120s"
+                sudo docker ps -a --filter "name=$(CONTAINER_NAME)" --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
+                sudo docker logs --tail 200 $(CONTAINER_NAME) || true
+                exit 1
+              fi
+
+              sudo docker image prune -f --filter "until=168h" || true
+              EOF
+            displayName: Pull, Run, and Health Check on VM

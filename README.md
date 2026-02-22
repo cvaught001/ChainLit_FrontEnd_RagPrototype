@@ -4,7 +4,8 @@ Chainlit UI that connects to the Northstar RAG API. It sends user prompts to `/a
 
 ## Version
 
-Current release: `1.0.0_stable`
+Current release is injected at image build time via `APP_VERSION` and published to
+`<meta name="version" content="...">` in the app index page.
 
 ## What this does
 

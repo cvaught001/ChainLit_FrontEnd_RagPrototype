@@ -1,7 +1,10 @@
 services:
   chainlit:
     container_name: chainlit-frontend
-    build: .
+    build:
+      context: .
+      args:
+        APP_VERSION: ${APP_VERSION:-dev-local}
     ports:
       - "5002:8001"
     environment:

@@ -7,7 +7,12 @@
   const OPEN_CLASS = 'recent-searches-open'
   const MOBILE_QUERY = '(max-width: 768px)'
   const PAGE_TITLE = 'Northstar RAG Database Chat LLM Demo'
-  const APP_VERSION = '1.0.0_stable'
+  const APP_VERSION_PLACEHOLDER = '__APP_VERSION__'
+  const APP_VERSION_TOKEN = ['__APP', '_VERSION__'].join('')
+  const APP_VERSION =
+    APP_VERSION_PLACEHOLDER === APP_VERSION_TOKEN
+      ? 'dev-local'
+      : APP_VERSION_PLACEHOLDER
 
   const getRoot = () =>
     window.cl_shadowRootElement ||

@@ -63,6 +63,7 @@ stages:
                 --password-stdin "https://$(GAR_HOST)"
 
               docker build --platform linux/amd64 \
+                --build-arg APP_VERSION="$(IMAGE_TAG)" \
                 -t "$(IMAGE_URI)" \
                 -t "$(IMAGE_URI_LATEST)" \
                 .
@@ -99,11 +100,23 @@ stages:
 
               SSH_OPTS="-i $(vmSshKey.secureFilePath) -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 
+              echo "Deploy target: $(VM_USER)@$(VM_HOST)"
+              echo "VM env path: $(VM_ENV_FILE)"
+              echo "Secure file variable: $(VM_SSH_SECURE_FILE)"
               echo "Using SSH key fingerprint:"
               ssh-keygen -lf "$(vmSshKey.secureFilePath)"
+              if ! ssh-keygen -y -f "$(vmSshKey.secureFilePath)" >/dev/null 2>&1; then
+                echo "The SSH private key could not be read non-interactively."
+                echo "Use an unencrypted private key in Azure Secure Files for CI deployments."
+                exit 1
+              fi
 
               # Fail fast with a clear message when VM key/user/host do not match.
-              ssh ${SSH_OPTS} "$(VM_USER)@$(VM_HOST)" "echo SSH preflight OK"
+              if ! ssh ${SSH_OPTS} "$(VM_USER)@$(VM_HOST)" "echo SSH preflight OK"; then
+                echo "SSH preflight failed for $(VM_USER)@$(VM_HOST)."
+                echo "Verify VM_HOST/VM_USER, and confirm this key is in /home/$(VM_USER)/.ssh/authorized_keys on the VM."
+                exit 1
+              fi
 
               # Authenticate Docker on VM to pull private image from Artifact Registry.
               cat "$(gcpSaJson.secureFilePath)" | ssh ${SSH_OPTS} "$(VM_USER)@$(VM_HOST)" \

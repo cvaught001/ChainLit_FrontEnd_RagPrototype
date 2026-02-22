@@ -21,9 +21,9 @@ variables:
   # GCE VM external IP can change after stop/start when using ephemeral IPs.
   # Reserve/attach a static external IP (or use DNS) for stable CI/CD deployments.
   VM_HOST: 35.224.13.33
-  VM_USER: christopher
+  VM_USER: christophervaught
   VM_SSH_SECURE_FILE: gcp-vm-ssh-key-ci.pem
-  VM_ENV_FILE: /home/christopher/chainlit-frontend/.env
+  VM_ENV_FILE: /home/$(VM_USER)/chainlit-frontend/.env
   USE_GCP_SECRET_MANAGER: 'true'
   GCP_RUNTIME_SECRETS: API_BASE_URL LLM_TEST_PATH DEBUG_MODE LLM_SYSTEM_PROMPT
   # Optional: externalize VM identity/key via Azure DevOps variables.
